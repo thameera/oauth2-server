@@ -16,14 +16,17 @@ app.get('/authorize', (req, res) => {
   /* ClientID validations */
   const clientId = req.query.client_id
   if (!clientId) {
+    res.status(400)
     return res.render('error', {message: 'Client ID missing'})
   }
   const client = CLIENTS.find(c => c.id === clientId)
   if (!client) {
+    res.status(400)
     return res.render('error', {message: `Invalid client ID: ${clientId}`})
   }
   //console.log(client)
 
+  res.status(501)
   res.render('error', {message: '/authorize not fully implemented'})
 })
 

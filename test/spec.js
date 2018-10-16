@@ -42,12 +42,12 @@ describe('App', () => {
   })
 
   describe('/authorize', () => {
-    const errCheck = (path, cb) => {
+    const errCheck = (path, status, cb) => {
       chai.request(app)
         .get(path)
         .end((err, res) => {
           expect(err).to.equal(null)
-          expect(res).to.have.status(200)
+          expect(res).to.have.status(status)
 
           const { $, $$ } = getSelectors(res.text)
           expect($('title').text).to.equal('Error')
@@ -56,28 +56,28 @@ describe('App', () => {
     }
 
     it('should look for a client ID', (done) => {
-      errCheck('/authorize', ($, $$) => {
+      errCheck('/authorize', 400, ($, $$) => {
         expect($('p').textContent).to.equal('Client ID missing')
         done()
       })
     })
 
     it('should detect an empty client ID', (done) => {
-      errCheck('/authorize?client_id=', ($, $$) => {
+      errCheck('/authorize?client_id=', 400, ($, $$) => {
         expect($('p').textContent).to.equal('Client ID missing')
         done()
       })
     })
 
     it('should validate the client ID', (done) => {
-      errCheck('/authorize?client_id=invalidID', ($, $$) => {
+      errCheck('/authorize?client_id=invalidID', 400, ($, $$) => {
         expect($('p').textContent).to.equal('Invalid client ID: invalidID')
         done()
       })
     })
 
     it('should show unimplemented error if no other errors are found', (done) => {
-      errCheck('/authorize?client_id=1', ($, $$) => {
+      errCheck('/authorize?client_id=1', 501, ($, $$) => {
         expect($('p').textContent).to.equal('/authorize not fully implemented')
         done()
       })
