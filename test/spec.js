@@ -32,6 +32,7 @@ describe('App', () => {
     it('should send back the OIDC Server home page', async () => {
       const res = await chai.request(app).get('/')
       expect(res).to.have.status(200)
+      expect(res).to.have.header('content-type', /^text\/html/)
       expect(res.text).to.equal('OIDC server')
     })
   })
@@ -40,6 +41,7 @@ describe('App', () => {
     const errCheck = async (path, status) => {
       const res = await chai.request(app).get(path)
       expect(res).to.have.status(status)
+      expect(res).to.have.header('content-type', /^text\/html/)
 
       const { $, $$ } = getSelectors(res.text)
       expect($('title').text).to.equal('Error')
@@ -76,9 +78,33 @@ describe('App', () => {
       expect($('p').textContent).to.equal('Invalid response type: pqr')
     })
 
-    it('should show unimplemented error if no other errors are found', async () => {
-      const { $ } = await errCheck('/authorize?client_id=1&response_type=token', 501)
-      expect($('p').textContent).to.equal('/authorize not fully implemented')
+    it('should show the login page if no errors are found', async () => {
+      const res = await chai.request(app).get('/authorize?client_id=1&response_type=token')
+      expect(res).to.have.status(200)
+      expect(res).to.have.header('content-type', /^text\/html/)
+
+      const { $, $$ } = getSelectors(res.text)
+      expect($('title').text).to.equal('Login')
+      expect($('h1').textContent).to.equal('User Login')
+
+      const form = $('form')
+      expect(form.getAttribute('action')).to.equal('/login')
+      expect(form.getAttribute('method').toLowerCase()).to.equal('post')
+
+      const userInput = $('input#username')
+      expect(userInput.getAttributeNames()).to.include('required')
+      expect(userInput.getAttribute('type')).to.equal('text')
+      expect(userInput.getAttribute('name')).to.equal('username')
+      const pwInput = $('input#password')
+      expect(pwInput.getAttributeNames()).to.include('required')
+      expect(pwInput.getAttribute('type')).to.equal('password')
+      expect(pwInput.getAttribute('name')).to.equal('password')
+      const idInput = $('input#login_id')
+      expect(idInput.getAttribute('type')).to.equal('hidden')
+      expect(idInput.getAttribute('name')).to.equal('login_id')
+      expect(idInput.getAttribute('value')).to.match(/^login-.*/)
+      const button = $('input#submit')
+      expect(button.getAttribute('type')).to.equal('submit')
     })
   })
 })

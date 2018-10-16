@@ -1,4 +1,6 @@
 const express = require('express')
+const uuid = require('uuid/v4')
+
 const app = express()
 
 const CLIENTS = [
@@ -38,8 +40,9 @@ app.get('/authorize', (req, res) => {
     return res.render('error', {message: `Invalid response type: ${responseType}`})
   }
 
-  res.status(501)
-  res.render('error', {message: '/authorize not fully implemented'})
+  const loginID = `login-${uuid()}`
+  res.status(200)
+  res.render('login', {login_id: loginID})
 })
 
 module.exports = app
