@@ -1,11 +1,14 @@
 {
+  "name": "oauthproto",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "node app.js"
+  },
   "dependencies": {
     "dotenv": "^6.0.0",
     "ejs": "^2.6.1",
     "express": "^4.16.3"
-  },
-  "name": "oauthproto",
-  "version": "1.0.0",
-  "main": "index.js",
-  "license": "MIT"
+  }
 }
