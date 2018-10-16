@@ -5,3 +5,9 @@
 ```
 npm start
 ```
+
+## Testing
+
+```
+npm test
+```

@@ -22,7 +22,7 @@ app.get('/authorize', (req, res) => {
   if (!client) {
     return res.render('error', {message: `Invalid client ID: ${clientId}`})
   }
-  console.log(client)
+  //console.log(client)
 
   res.render('error', {message: '/authorize not fully implemented'})
 })
