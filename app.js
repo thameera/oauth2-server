@@ -17,7 +17,7 @@ app.get('/authorize', (req, res) => {
   const clientId = req.query.client_id
   if (!clientId) {
     res.status(400)
-    return res.render('error', {message: 'Client ID missing'})
+    return res.render('error', {message: 'Missing required parameter: client_id'})
   }
   const client = CLIENTS.find(c => c.id === clientId)
   if (!client) {
@@ -25,6 +25,18 @@ app.get('/authorize', (req, res) => {
     return res.render('error', {message: `Invalid client ID: ${clientId}`})
   }
   //console.log(client)
+
+  /* Response type validations */
+  const responseType = req.query.response_type
+  if (!responseType) {
+    res.status(400)
+    return res.render('error', {message: 'Missing required parameter: response_type'})
+  }
+
+  if (!['token'].includes(responseType)) {
+    res.status(400)
+    return res.render('error', {message: `Invalid response type: ${responseType}`})
+  }
 
   res.status(501)
   res.render('error', {message: '/authorize not fully implemented'})

@@ -57,14 +57,14 @@ describe('App', () => {
 
     it('should look for a client ID', (done) => {
       errCheck('/authorize', 400, ($, $$) => {
-        expect($('p').textContent).to.equal('Client ID missing')
+        expect($('p').textContent).to.equal('Missing required parameter: client_id')
         done()
       })
     })
 
     it('should detect an empty client ID', (done) => {
       errCheck('/authorize?client_id=', 400, ($, $$) => {
-        expect($('p').textContent).to.equal('Client ID missing')
+        expect($('p').textContent).to.equal('Missing required parameter: client_id')
         done()
       })
     })
@@ -76,8 +76,29 @@ describe('App', () => {
       })
     })
 
+    it('should look for a response type', (done) => {
+      errCheck('/authorize?client_id=1', 400, ($, $$) => {
+        expect($('p').textContent).to.equal('Missing required parameter: response_type')
+        done()
+      })
+    })
+
+    it('should detect an empty response type', (done) => {
+      errCheck('/authorize?client_id=1&response_type=', 400, ($, $$) => {
+        expect($('p').textContent).to.equal('Missing required parameter: response_type')
+        done()
+      })
+    })
+
+    it('should look validate the response type', (done) => {
+      errCheck('/authorize?client_id=1&response_type=pqr', 400, ($, $$) => {
+        expect($('p').textContent).to.equal('Invalid response type: pqr')
+        done()
+      })
+    })
+
     it('should show unimplemented error if no other errors are found', (done) => {
-      errCheck('/authorize?client_id=1', 501, ($, $$) => {
+      errCheck('/authorize?client_id=1&response_type=token', 501, ($, $$) => {
         expect($('p').textContent).to.equal('/authorize not fully implemented')
         done()
       })
