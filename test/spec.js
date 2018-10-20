@@ -118,6 +118,22 @@ describe('App', () => {
       const button = $('input#submit')
       expect(button.getAttribute('type')).to.equal('submit')
     })
+
+    it('should create a login session in DB with all details', async () => {
+      const res = await chai.request(app).get('/authorize?client_id=1&response_type=token')
+
+      expect(res).to.have.status(200)
+      const { $, $$ } = getSelectors(res.text)
+
+      const idInput = $('input#login_id')
+      const loginID = idInput.getAttribute('value')
+      session = await db.getLoginSessionByID(loginID)
+
+      expect(session).to.be.not.null
+      expect(session.id).to.equal(loginID)
+      expect(session.client_id).to.equal('1')
+      expect(session.response_type).to.equal('token')
+    })
   })
 })
 

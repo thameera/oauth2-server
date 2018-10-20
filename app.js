@@ -39,6 +39,14 @@ app.get('/authorize', async (req, res) => {
   }
 
   const loginID = `login-${uuid()}`
+
+  const loginSession = {
+    id: loginID,
+    client_id: clientId,
+    response_type: responseType,
+  }
+  await db.createLoginSession(loginSession)
+
   res.status(200)
   res.render('login', {login_id: loginID})
 })
