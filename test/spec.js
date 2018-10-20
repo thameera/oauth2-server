@@ -2,12 +2,19 @@ const chai = require('chai')
 const chaiHttp = require('chai-http')
 const JSDOM = require('jsdom').JSDOM
 
+const db = require('../db')
 const app = require('../app')
 
 const expect = chai.expect
 chai.use(chaiHttp)
 
 const PORT = 8499
+const INIT_DATA = {
+  clients: [
+    {id: '1', name: 'Default client'},
+    {id: '2', name: 'Client 2'}
+  ]
+}
 
 const getSelectors = html => {
   const document = new JSDOM(html).window.document
@@ -20,12 +27,17 @@ const getSelectors = html => {
 describe('App', () => {
   let server
 
-  before(() => {
+  before(async () => {
+    await db.init({
+      strategy: 'memory',
+      data: INIT_DATA
+    })
     server = app.listen(PORT)
   })
 
   after(() => {
     server.close()
+    db.shutdown()
   })
 
   describe('/', () => {
