@@ -20,6 +20,9 @@
 
 <body>
   <h1>User Login</h1>
+  <% if (locals.err) { %>
+    <div class="error"><%= err %></div>
+  <% } %>
   <form action="/login" method="POST">
     <div class="row">
       <label for="username">Username</label>

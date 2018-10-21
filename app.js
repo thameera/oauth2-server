@@ -1,10 +1,22 @@
 const express = require('express')
+const session = require('express-session')
+const flash = require('connect-flash')
 const uuid = require('uuid/v4')
 
 /* Note: the DB is expected to have been initialized by starter script */
 const db = require('./db')
 
 const app = express()
+
+app.use(express.urlencoded({ extended: true }))
+
+app.use(session({
+  secret: 'TODO change this',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 60000 }
+}))
+app.use(flash())
 
 app.set('view engine', 'ejs')
 
@@ -44,11 +56,44 @@ app.get('/authorize', async (req, res) => {
     id: loginID,
     client_id: clientId,
     response_type: responseType,
+    originalUrl: req.originalUrl,
   }
   await db.createLoginSession(loginSession)
 
+  const err = req.flash('err')
+  if (err && err.length) {
+    res.locals.err = err[0]
+  }
   res.status(200)
   res.render('login', {login_id: loginID})
+})
+
+app.post('/login', async (req, res) => {
+  const loginID = req.body.login_id
+  if (!loginID) {
+    return res.status(400).render('error', {message: 'Invalid login session'})
+  }
+  const loginSession = db.getLoginSessionByID(loginID)
+  if (!loginSession) {
+    return res.status(400).render('error', {message: 'Invalid login session'})
+  }
+
+  const username = req.body.username
+  const password = req.body.password
+
+  if (!username || !password) {
+    req.flash('err', 'Invalid username or password')
+    return res.redirect(loginSession.originalUrl)
+  }
+
+  const user = await db.getUserByEmail(username)
+  if (!user || (password !== user.password)) {
+    req.flash('err', 'Invalid username or password')
+    return res.redirect(loginSession.originalUrl)
+  }
+
+  res.status(501)
+  res.render('error', {message: '/login not fully implemented'})
 })
 
 module.exports = app

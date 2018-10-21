@@ -32,6 +32,7 @@ const shutdown = async () => {
 const getClientByID = id => strategy.getClientByID(id)
 const createLoginSession = session => strategy.createLoginSession(session)
 const getLoginSessionByID = id => strategy.getLoginSessionByID(id)
+const getUserByEmail = email => strategy.getUserByEmail(email)
 
 module.exports = {
   init,
@@ -39,4 +40,5 @@ module.exports = {
   getClientByID,
   createLoginSession,
   getLoginSessionByID,
+  getUserByEmail,
 }
