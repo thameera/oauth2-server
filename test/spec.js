@@ -11,8 +11,9 @@ chai.use(chaiHttp)
 const PORT = 8499
 const INIT_DATA = {
   clients: [
-    {id: '1', name: 'Default client'},
-    {id: '2', name: 'Client 2'}
+    {id: '1', name: 'Default client', redirect_uris: ['http://localhost:8498', 'http://localhost:8497']},
+    {id: '2', name: 'Client 2', redirect_uris: ['http://localhost:8490']},
+    {id: '3', name: 'Client 3', redirect_uris: []},
   ],
   users: [
     {email: 'test@example.com', password: 'pass'},
@@ -91,6 +92,21 @@ describe('App', () => {
     it('should look validate the response type', async () => {
       const { $ } = await errCheck('/authorize?client_id=1&response_type=pqr', 400)
       expect($('p').textContent).to.equal('Invalid response type: pqr')
+    })
+
+    it('should check if the client has registered redirect URIs if a redirect URI is not specified', async () => {
+      const { $ } = await errCheck('/authorize?client_id=3&response_type=token', 400)
+      expect($('p').textContent).to.equal('No redirect URIs configured for the client')
+    })
+
+    it('should check if the client has registered redirect URIs if a redirect URI is specified', async () => {
+      const { $ } = await errCheck('/authorize?client_id=3&response_type=token&redirect_uri=http://localhost:8498', 400)
+      expect($('p').textContent).to.equal('No redirect URIs configured for the client')
+    })
+
+    it('should validate the redirect uri against registered redirect uris', async () => {
+      const { $ } = await errCheck('/authorize?client_id=1&response_type=token&redirect_uri=http://localhost:8500', 400)
+      expect($('p').textContent).to.equal('Invalid redirect URI: http://localhost:8500')
     })
 
     it('should show the login page if no errors are found', async () => {

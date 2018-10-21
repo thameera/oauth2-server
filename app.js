@@ -50,12 +50,24 @@ app.get('/authorize', async (req, res) => {
     return res.render('error', {message: `Invalid response type: ${responseType}`})
   }
 
+  /* Redirect URL validations */
+  const validUris = client.redirect_uris
+  if (!validUris || !validUris.length) {
+    return res.status(400).render('error', {message: 'No redirect URIs configured for the client'})
+  }
+
+  const redirectUri = req.query.redirect_uri || validUris[0]
+  if (!validUris.includes(redirectUri)) {
+    return res.status(400).render('error', {message: `Invalid redirect URI: ${redirectUri}`})
+  }
+
   const loginID = `login-${uuid()}`
 
   const loginSession = {
     id: loginID,
     client_id: clientId,
     response_type: responseType,
+    redirect_uri: redirectUri,
     originalUrl: req.originalUrl,
   }
   await db.createLoginSession(loginSession)
