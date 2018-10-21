@@ -8,8 +8,8 @@ const run = async () => {
     strategy: 'memory',
     data: {
       clients: [
-        {id: '1', name: 'Default client', redirect_uris: ['http://localhost:8200', 'http://localhost:8201']},
-        {id: '2', name: 'Client 2', redirect_uris: ['http://localhost:8200']},
+        {id: '1', secret: 'sec1', name: 'Default client', redirect_uris: ['http://localhost:8200', 'http://localhost:8201']},
+        {id: '2', secret: 'sec2', name: 'Client 2', redirect_uris: ['http://localhost:8200']},
       ],
       users: [
         {email: 'test@example.com', password: 'f'},

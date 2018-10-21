@@ -13,6 +13,7 @@ const utils = require('./utils')
 const app = express()
 
 app.use(express.urlencoded({ extended: true }))
+app.use(express.json())
 
 app.use(session({
   secret: 'TODO change this',
@@ -123,6 +124,21 @@ app.post('/login', async (req, res) => {
   url.searchParams.set('code', code)
 
   res.redirect(url)
+})
+
+app.post('/token', async (req, res) => {
+  const reqdParams = ['client_id', 'client_secret', 'grant_type', 'code']
+  const body = req.body || {}
+
+  const missingParam = reqdParams.find(p => !body[p])
+  if (missingParam) {
+    return res.status(400).json({
+      error: 'invalid_request',
+      error_description: `Missing parameter: ${missingParam}`
+    })
+  }
+
+  res.status(501).json({ error: 'Token endpoint not implemented yet' })
 })
 
 module.exports = app

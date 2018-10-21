@@ -12,9 +12,9 @@ chai.use(chaiHttp)
 const PORT = 8499
 const INIT_DATA = {
   clients: [
-    {id: '1', name: 'Default client', redirect_uris: ['http://localhost:8498', 'http://localhost:8497']},
-    {id: '2', name: 'Client 2', redirect_uris: ['http://localhost:8490']},
-    {id: '3', name: 'Client 3', redirect_uris: []},
+    {id: '1', secret: 'sec1', name: 'Default client', redirect_uris: ['http://localhost:8498', 'http://localhost:8497']},
+    {id: '2', secret: 'sec2', name: 'Client 2', redirect_uris: ['http://localhost:8490']},
+    {id: '3', secret: 'sec3', name: 'Client 3', redirect_uris: []},
   ],
   users: [
     {email: 'test@example.com', password: 'pass'},
@@ -284,6 +284,24 @@ describe('App', () => {
       expect(authznCode.context.redirect_uri).to.equal('http://localhost:8498')
       expect(authznCode.context.email).to.equal('test@example.com')
       expect(authznCode.context.expires_at).to.equal(FIXED_TIME + 10 * 60 * 1000)
+    })
+  })
+
+  describe('/token', () => {
+    const doPost = payload => chai.request(app).post('/token').send(payload)
+
+    it('should check existence of all required parameters', async () => {
+      const check = async (body, param) => {
+        const res = await doPost(body)
+        expect(res).to.have.status(400)
+        expect(res.body.error).to.equal('invalid_request')
+        expect(res.body.error_description).to.equal(`Missing parameter: ${param}`)
+      }
+
+      await check({ client_secret: 'sec1', grant_type: 'authorization_code', code: 'abc' }, 'client_id')
+      await check({ client_id: '1', grant_type: 'authorization_code', code: 'abc' }, 'client_secret')
+      await check({ client_id: '1', client_secret: 'sec1', code: 'abc' }, 'grant_type')
+      await check({ client_id: '1', client_secret: 'sec1', grant_type: 'authorization_code' }, 'code')
     })
   })
 })
