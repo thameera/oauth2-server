@@ -104,8 +104,7 @@ app.post('/login', async (req, res) => {
     return res.redirect(loginSession.originalUrl)
   }
 
-  res.status(501)
-  res.render('error', {message: '/login not fully implemented'})
+  res.redirect(loginSession.redirect_uri)
 })
 
 module.exports = app

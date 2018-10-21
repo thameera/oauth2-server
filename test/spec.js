@@ -168,6 +168,7 @@ describe('App', () => {
         id: 'login-pqr123',
         client_id: '1',
         response_type: 'token',
+        redirect_uri: 'http://localhost:8498',
         originalUrl: '/authorize?client_id=1&response_type=token',
       })
     })
@@ -233,15 +234,15 @@ describe('App', () => {
       await invalidUserPassTest('test@example.com', 'wrong')
     })
 
-    it('should give unimplemented error for valid credentials', async () => {
-      const res = await doPost('login-pqr123', 'test@example.com', 'pass')
+    it('should redirect to redirect_uri for valid credentials', async () => {
+      const res = await agent.post('/login').type('form').redirects(0).send({
+        username: 'test@example.com',
+        password: 'pass',
+        login_id: 'login-pqr123'
+      })
 
-      expect(res).to.have.status(501)
-      expect(res).to.have.header('content-type', /^text\/html/)
-
-      const { $, $$ } = getSelectors(res.text)
-      expect($('title').text).to.equal('Error')
-      expect($('p').textContent).to.equal('/login not fully implemented')
+      expect(res).to.have.status(302)
+      expect(res).to.have.header('location', 'http://localhost:8498')
     })
   })
 })
