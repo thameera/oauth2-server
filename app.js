@@ -2,6 +2,7 @@ const express = require('express')
 const session = require('express-session')
 const flash = require('connect-flash')
 const uuid = require('uuid/v4')
+const randomstring = require('randomstring')
 
 /* Note: the DB is expected to have been initialized by starter script */
 const db = require('./db')
@@ -104,7 +105,19 @@ app.post('/login', async (req, res) => {
     return res.redirect(loginSession.originalUrl)
   }
 
-  res.redirect(loginSession.redirect_uri)
+  /* Generate authzn code */
+  const code = randomstring.generate({ length: 32, charset: 'alphanumeric' })
+  const context = {
+    client_id: loginSession.client_id,
+    redirect_uri: loginSession.redirect_uri,
+    email: username,
+  }
+  await db.createAuthznCode({ code, context })
+
+  const url = new URL(loginSession.redirect_uri)
+  url.searchParams.set('code', code)
+
+  res.redirect(url)
 })
 
 module.exports = app

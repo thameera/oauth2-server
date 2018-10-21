@@ -234,7 +234,7 @@ describe('App', () => {
       await invalidUserPassTest('test@example.com', 'wrong')
     })
 
-    it('should redirect to redirect_uri for valid credentials', async () => {
+    it('should create an authzn code and redirect with that code', async () => {
       const res = await agent.post('/login').type('form').redirects(0).send({
         username: 'test@example.com',
         password: 'pass',
@@ -242,7 +242,17 @@ describe('App', () => {
       })
 
       expect(res).to.have.status(302)
-      expect(res).to.have.header('location', 'http://localhost:8498')
+      const url = new URL(res.headers.location)
+      const code = url.searchParams.get('code')
+      expect(code).to.not.be.null
+      expect(code).to.have.length(32)
+
+      const authznCode = await db.getAuthznCode(code)
+      expect(authznCode).to.be.not.null
+      expect(authznCode).to.be.not.undefined
+      expect(authznCode.context.client_id).to.equal('1')
+      expect(authznCode.context.redirect_uri).to.equal('http://localhost:8498')
+      expect(authznCode.context.email).to.equal('test@example.com')
     })
   })
 })
