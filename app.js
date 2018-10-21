@@ -7,6 +7,9 @@ const randomstring = require('randomstring')
 /* Note: the DB is expected to have been initialized by starter script */
 const db = require('./db')
 
+const config = require('./config')
+const utils = require('./utils')
+
 const app = express()
 
 app.use(express.urlencoded({ extended: true }))
@@ -107,10 +110,12 @@ app.post('/login', async (req, res) => {
 
   /* Generate authzn code */
   const code = randomstring.generate({ length: 32, charset: 'alphanumeric' })
+  const expires_at = utils.getExpiryTime(config.AUTHZN_CODE_EXPIRY)
   const context = {
     client_id: loginSession.client_id,
     redirect_uri: loginSession.redirect_uri,
     email: username,
+    expires_at,
   }
   await db.createAuthznCode({ code, context })
 

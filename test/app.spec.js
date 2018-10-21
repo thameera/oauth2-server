@@ -1,6 +1,7 @@
 const chai = require('chai')
 const chaiHttp = require('chai-http')
 const JSDOM = require('jsdom').JSDOM
+const moment = require('moment')
 
 const db = require('../db')
 const app = require('../app')
@@ -159,6 +160,7 @@ describe('App', () => {
 
   describe('/login', () => {
     let agent = null
+    const origMomentNow = moment.now
 
     before(async () => {
       // Agent is used to preserve cookies
@@ -171,6 +173,10 @@ describe('App', () => {
         redirect_uri: 'http://localhost:8498',
         originalUrl: '/authorize?client_id=1&response_type=code',
       })
+    })
+
+    afterEach(() => {
+      moment.now = origMomentNow
     })
 
     after(() => {
@@ -235,6 +241,9 @@ describe('App', () => {
     })
 
     it('should create an authzn code and redirect with that code', async () => {
+      const FIXED_TIME = 1540117200000
+      moment.now = () => +new Date(FIXED_TIME)
+
       const res = await agent.post('/login').type('form').redirects(0).send({
         username: 'test@example.com',
         password: 'pass',
@@ -253,6 +262,7 @@ describe('App', () => {
       expect(authznCode.context.client_id).to.equal('1')
       expect(authznCode.context.redirect_uri).to.equal('http://localhost:8498')
       expect(authznCode.context.email).to.equal('test@example.com')
+      expect(authznCode.context.expires_at).to.equal(FIXED_TIME + 10 * 60 * 1000)
     })
   })
 })
