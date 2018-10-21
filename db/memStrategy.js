@@ -1,9 +1,11 @@
-let data = {
+const DEFAULTS = {
   authzn_codes: [],
   clients: [],
   login_sessions: [],
   users: [],
 }
+
+let data = DEFAULTS
 
 module.exports = {
   init: d => {
@@ -14,7 +16,7 @@ module.exports = {
   },
 
   shutdown: () => {
-    data = []
+    data = DEFAULTS
   },
 
   getClientByID: id => data.clients.find(c => c.id === id),
