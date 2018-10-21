@@ -60,8 +60,8 @@ app.get('/authorize', async (req, res) => {
     return res.status(400).render('error', {message: 'No redirect URIs configured for the client'})
   }
 
-  const redirectUri = req.query.redirect_uri || validUris[0]
-  if (!validUris.includes(redirectUri)) {
+  const redirectUri = req.query.redirect_uri || null
+  if (redirectUri && !validUris.includes(redirectUri)) {
     return res.status(400).render('error', {message: `Invalid redirect URI: ${redirectUri}`})
   }
 

@@ -139,8 +139,7 @@ describe('App', () => {
       expect(button.getAttribute('type')).to.equal('submit')
     })
 
-    it('should create a login session in DB with all details', async () => {
-      const url = '/authorize?client_id=1&response_type=code'
+    const getLoginSession = async url => {
       const res = await chai.request(app).get(url)
 
       expect(res).to.have.status(200)
@@ -148,13 +147,35 @@ describe('App', () => {
 
       const idInput = $('input#login_id')
       const loginID = idInput.getAttribute('value')
-      session = await db.getLoginSessionByID(loginID)
+      const session = await db.getLoginSessionByID(loginID)
+      return { session, loginID }
+    }
 
-      expect(session).to.be.not.null
+    it('should create a login session in DB with all details', async () => {
+      const url = '/authorize?client_id=1&response_type=code'
+      const { session, loginID } = await getLoginSession(url)
+
+      expect(session).to.be.not.undefined
       expect(session.id).to.equal(loginID)
       expect(session.client_id).to.equal('1')
       expect(session.response_type).to.equal('code')
       expect(session.originalUrl).to.equal(url)
+    })
+
+    it('should set redirect_uri in login session when a redirect uri is provided', async () => {
+      const url = '/authorize?client_id=1&response_type=code&redirect_uri=http://localhost:8498'
+      const { session } = await getLoginSession(url)
+
+      expect(session).to.be.not.undefined
+      expect(session.redirect_uri).to.equal('http://localhost:8498')
+    })
+
+    it('should not set redirect_uri in login session when a redirect uri is not provided', async () => {
+      const url = '/authorize?client_id=1&response_type=code'
+      const { session } = await getLoginSession(url)
+
+      expect(session).to.be.not.undefined
+      expect(session.redirect_uri).to.be.null
     })
   })
 
