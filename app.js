@@ -45,7 +45,7 @@ app.get('/authorize', async (req, res) => {
     return res.render('error', {message: 'Missing required parameter: response_type'})
   }
 
-  if (!['token'].includes(responseType)) {
+  if (!['code'].includes(responseType)) {
     res.status(400)
     return res.render('error', {message: `Invalid response type: ${responseType}`})
   }

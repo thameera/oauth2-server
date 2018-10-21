@@ -95,22 +95,22 @@ describe('App', () => {
     })
 
     it('should check if the client has registered redirect URIs if a redirect URI is not specified', async () => {
-      const { $ } = await errCheck('/authorize?client_id=3&response_type=token', 400)
+      const { $ } = await errCheck('/authorize?client_id=3&response_type=code', 400)
       expect($('p').textContent).to.equal('No redirect URIs configured for the client')
     })
 
     it('should check if the client has registered redirect URIs if a redirect URI is specified', async () => {
-      const { $ } = await errCheck('/authorize?client_id=3&response_type=token&redirect_uri=http://localhost:8498', 400)
+      const { $ } = await errCheck('/authorize?client_id=3&response_type=code&redirect_uri=http://localhost:8498', 400)
       expect($('p').textContent).to.equal('No redirect URIs configured for the client')
     })
 
     it('should validate the redirect uri against registered redirect uris', async () => {
-      const { $ } = await errCheck('/authorize?client_id=1&response_type=token&redirect_uri=http://localhost:8500', 400)
+      const { $ } = await errCheck('/authorize?client_id=1&response_type=code&redirect_uri=http://localhost:8500', 400)
       expect($('p').textContent).to.equal('Invalid redirect URI: http://localhost:8500')
     })
 
     it('should show the login page if no errors are found', async () => {
-      const res = await chai.request(app).get('/authorize?client_id=1&response_type=token')
+      const res = await chai.request(app).get('/authorize?client_id=1&response_type=code')
       expect(res).to.have.status(200)
       expect(res).to.have.header('content-type', /^text\/html/)
 
@@ -139,7 +139,7 @@ describe('App', () => {
     })
 
     it('should create a login session in DB with all details', async () => {
-      const url = '/authorize?client_id=1&response_type=token'
+      const url = '/authorize?client_id=1&response_type=code'
       const res = await chai.request(app).get(url)
 
       expect(res).to.have.status(200)
@@ -152,7 +152,7 @@ describe('App', () => {
       expect(session).to.be.not.null
       expect(session.id).to.equal(loginID)
       expect(session.client_id).to.equal('1')
-      expect(session.response_type).to.equal('token')
+      expect(session.response_type).to.equal('code')
       expect(session.originalUrl).to.equal(url)
     })
   })
@@ -167,9 +167,9 @@ describe('App', () => {
       await db.createLoginSession({
         id: 'login-pqr123',
         client_id: '1',
-        response_type: 'token',
+        response_type: 'code',
         redirect_uri: 'http://localhost:8498',
-        originalUrl: '/authorize?client_id=1&response_type=token',
+        originalUrl: '/authorize?client_id=1&response_type=code',
       })
     })
 
