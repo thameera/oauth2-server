@@ -306,39 +306,41 @@ describe('App', () => {
       expect(res.body.error_description).to.equal(`Unsupported grant type`)
     })
 
-    it('should return invalid_client error for unsupported authorization header types', async () => {
-      const test = async header => {
-        const payload =  { grant_type: 'authorization_code', code: 'abc' }
-        const res = await doAuthPost(header, payload)
-        expect(res).to.have.status(401)
-        expect(res.body.error).to.equal('invalid_client')
-        expect(res.body.error_description).to.equal(`Unsupported authentication method`)
-        expect(res).to.have.header('www-authenticate', 'Basic')
-      }
+    describe('Client auth: authorization header specified', () => {
+      it('should return invalid_client error for unsupported authorization header types', async () => {
+        const test = async header => {
+          const payload =  { grant_type: 'authorization_code', code: 'abc' }
+          const res = await doAuthPost(header, payload)
+          expect(res).to.have.status(401)
+          expect(res.body.error).to.equal('invalid_client')
+          expect(res.body.error_description).to.equal(`Unsupported authentication method`)
+          expect(res).to.have.header('www-authenticate', 'Basic')
+        }
 
-      await test('pqr')
-      await test('Basic')
-      await test('basic')
-      await test('basic ')
-      await test('Bearer')
-      await test('Bearer abc')
-    })
+        await test('pqr')
+        await test('Basic')
+        await test('basic')
+        await test('basic ')
+        await test('Bearer')
+        await test('Bearer abc')
+      })
 
-    it('should return invalid_client error for invalid credentials in authzn header', async () => {
-      const test = async creds => {
-        const enc = utils.encodeBase64
-        const payload =  { grant_type: 'authorization_code', code: 'abc' }
-        const res = await doAuthPost(`Basic ${utils.encodeBase64(creds)}`, payload)
-        expect(res).to.have.status(401)
-        expect(res.body.error).to.equal('invalid_client')
-        expect(res.body.error_description).to.equal(`Invalid client or secret`)
-        expect(res).to.have.header('www-authenticate', 'Basic')
-      }
+      it('should return invalid_client error for invalid credentials in authzn header', async () => {
+        const test = async creds => {
+          const enc = utils.encodeBase64
+          const payload =  { grant_type: 'authorization_code', code: 'abc' }
+          const res = await doAuthPost(`Basic ${utils.encodeBase64(creds)}`, payload)
+          expect(res).to.have.status(401)
+          expect(res.body.error).to.equal('invalid_client')
+          expect(res.body.error_description).to.equal(`Invalid client or secret`)
+          expect(res).to.have.header('www-authenticate', 'Basic')
+        }
 
-      await test('abc')
-      await test('1:')
-      await test('1:sdf')
-      await test('1000:sec1')
+        await test('abc')
+        await test('1:')
+        await test('1:sdf')
+        await test('1000:sec1')
+      })
     })
 
     it('should throw 501 error if no issues were found', async () => {
