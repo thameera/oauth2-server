@@ -290,7 +290,7 @@ describe('App', () => {
   describe('/token', () => {
     const doPost = payload => chai.request(app).post('/token').send(payload)
 
-    it('should check existence of all required parameters', async () => {
+    it('should check existence of all required parameters in body', async () => {
       const check = async (body, param) => {
         const res = await doPost(body)
         expect(res).to.have.status(400)
@@ -298,8 +298,6 @@ describe('App', () => {
         expect(res.body.error_description).to.equal(`Missing parameter: ${param}`)
       }
 
-      await check({ client_secret: 'sec1', grant_type: 'authorization_code', code: 'abc' }, 'client_id')
-      await check({ client_id: '1', grant_type: 'authorization_code', code: 'abc' }, 'client_secret')
       await check({ client_id: '1', client_secret: 'sec1', code: 'abc' }, 'grant_type')
       await check({ client_id: '1', client_secret: 'sec1', grant_type: 'authorization_code' }, 'code')
     })

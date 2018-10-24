@@ -127,7 +127,7 @@ app.post('/login', async (req, res) => {
 })
 
 app.post('/token', async (req, res) => {
-  const reqdParams = ['client_id', 'client_secret', 'grant_type', 'code']
+  const reqdParams = ['grant_type', 'code']
   const body = req.body || {}
 
   const missingParam = reqdParams.find(p => !body[p])
