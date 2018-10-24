@@ -130,7 +130,7 @@ app.post('/token', async (req, res) => {
   const throwError = (status, error, error_description) => res.status(status).json({ error, error_description })
 
   const body = req.body || {}
-  const grant = req.body.grant_type
+  const grant = body.grant_type
   if (!grant) {
     return throwError(400, 'invalid_request', 'Missing required parameter: grant_type')
   }
@@ -139,8 +139,9 @@ app.post('/token', async (req, res) => {
   }
 
   let client = null
-  const auth = req.headers['authorization']
 
+  /* Client authentication */
+  const auth = req.headers['authorization']
   if (auth) { /* Authorization header is present */
 
     const parts = auth.trim().split(' ')
@@ -157,7 +158,13 @@ app.post('/token', async (req, res) => {
 
   } else { /* No Authorization header sent */
 
-    return res.status(501).json({ error: 'Non-authorization-header auth not implemented yet' })
+    if (!body.client_id || !body.client_secret) {
+      return throwError(401, 'invalid_client', 'Client authentication failed')
+    }
+    client = await db.getClientByID(body.client_id)
+    if (!client || client.secret !== body.client_secret) {
+      return throwError(401, 'invalid_client', 'Invalid client or secret')
+    }
 
   }
 

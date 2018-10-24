@@ -343,6 +343,40 @@ describe('App', () => {
       })
     })
 
+    describe('Client auth: authorization header not specified', () => {
+      it('should return invalid_client error when either client_id or client_secret is missing in body', async () => {
+        const test = async body => {
+          const res = await doPost(body)
+          expect(res).to.have.status(401)
+          expect(res.body.error).to.equal('invalid_client')
+          expect(res.body.error_description).to.equal(`Client authentication failed`)
+          expect(res).to.not.have.header('www-authenticate')
+        }
+
+        const payload =  { grant_type: 'authorization_code', code: 'abc' }
+        await test({ ...payload, client_id: '1' })
+        await test({ ...payload, client_id: 'wrong_id' })
+        await test({ ...payload, client_secret: 'sec1' })
+      })
+
+      it('should return invalid_client error when credentials in body are incorrect', async () => {
+        const test = async body => {
+          const res = await doPost(body)
+          expect(res).to.have.status(401)
+          expect(res.body.error).to.equal('invalid_client')
+          expect(res.body.error_description).to.equal(`Invalid client or secret`)
+          expect(res).to.not.have.header('www-authenticate')
+        }
+
+        const payload =  { grant_type: 'authorization_code', code: 'abc' }
+        await test({ ...payload, client_id: 'wrong', client_secret: 'sec1' })
+        await test({ ...payload, client_id: '1', client_secret: 'wrong' })
+        await test({ ...payload, client_id: 'wrong', client_secret: 'wrong' })
+        await test({ ...payload, client_id: '2', client_secret: 'sec1' })
+        await test({ ...payload, client_id: '1', client_secret: 'sec2' })
+      })
+    })
+
     it('should throw 501 error if no issues were found', async () => {
       const auth = utils.encodeBase64('1:sec1')
       const res = await doAuthPost(`Basic ${auth}`, { grant_type: 'authorization_code', code: 'abc' })
