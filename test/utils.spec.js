@@ -6,6 +6,20 @@ const utils = require('../utils')
 const expect = chai.expect
 
 describe('Utils', () => {
+  describe('encodeBase64()', () => {
+    it('should correctly encode ascii values to base64', () => {
+      expect(utils.encodeBase64('abc')).to.equal('YWJj')
+      expect(utils.encodeBase64('x123:PQ')).to.equal('eDEyMzpQUQ==')
+    })
+  })
+
+  describe('decodeBase64()', () => {
+    it('should correctly decode base64 values to strings', () => {
+      expect(utils.decodeBase64('YWJj')).to.equal('abc')
+      expect(utils.decodeBase64('eDEyMzpQUQ==')).to.equal('x123:PQ')
+    })
+  })
+
   describe('getExpiryTime()', () => {
     const origNow = moment.now
     const FIXED_TIME = 1540117000000

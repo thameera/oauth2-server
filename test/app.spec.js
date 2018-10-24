@@ -4,6 +4,7 @@ const JSDOM = require('jsdom').JSDOM
 const moment = require('moment')
 
 const db = require('../db')
+const utils = require('../utils')
 const app = require('../app')
 
 const expect = chai.expect
@@ -289,6 +290,7 @@ describe('App', () => {
 
   describe('/token', () => {
     const doPost = payload => chai.request(app).post('/token').send(payload)
+    const doAuthPost = (auth, payload) => chai.request(app).post('/token').set('Authorization', auth).send(payload)
 
     it('should return invalid_request error if the grant_type param is missing', async () => {
       const res = await doPost({ client_id: '1', client_secret: 'sec1', code: 'abc' })
@@ -300,12 +302,48 @@ describe('App', () => {
     it('should return invalid_grant error if the grant type is not authzn code', async () => {
       const res = await doPost({ grant_type: 'implicit' })
       expect(res).to.have.status(400)
-      expect(res.body.error).to.equal('invalid_grant')
+      expect(res.body.error).to.equal('unsupported_grant_type')
       expect(res.body.error_description).to.equal(`Unsupported grant type`)
     })
 
+    it('should return invalid_client error for unsupported authorization header types', async () => {
+      const test = async header => {
+        const payload =  { grant_type: 'authorization_code', code: 'abc' }
+        const res = await doAuthPost(header, payload)
+        expect(res).to.have.status(401)
+        expect(res.body.error).to.equal('invalid_client')
+        expect(res.body.error_description).to.equal(`Unsupported authentication method`)
+        expect(res).to.have.header('www-authenticate', 'Basic')
+      }
+
+      await test('pqr')
+      await test('Basic')
+      await test('basic')
+      await test('basic ')
+      await test('Bearer')
+      await test('Bearer abc')
+    })
+
+    it('should return invalid_client error for invalid credentials in authzn header', async () => {
+      const test = async creds => {
+        const enc = utils.encodeBase64
+        const payload =  { grant_type: 'authorization_code', code: 'abc' }
+        const res = await doAuthPost(`Basic ${utils.encodeBase64(creds)}`, payload)
+        expect(res).to.have.status(401)
+        expect(res.body.error).to.equal('invalid_client')
+        expect(res.body.error_description).to.equal(`Invalid client or secret`)
+        expect(res).to.have.header('www-authenticate', 'Basic')
+      }
+
+      await test('abc')
+      await test('1:')
+      await test('1:sdf')
+      await test('1000:sec1')
+    })
+
     it('should throw 501 error if no issues were found', async () => {
-      const res = await doPost({ client_id: '1', client_secret: 'sec1', grant_type: 'authorization_code', code: 'abc' })
+      const auth = utils.encodeBase64('1:sec1')
+      const res = await doAuthPost(`Basic ${auth}`, { grant_type: 'authorization_code', code: 'abc' })
       expect(res).to.have.status(501)
     })
   })

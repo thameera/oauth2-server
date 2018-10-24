@@ -127,15 +127,38 @@ app.post('/login', async (req, res) => {
 })
 
 app.post('/token', async (req, res) => {
-  const throwError = (error, error_description) => res.status(400).json({ error, error_description })
+  const throwError = (status, error, error_description) => res.status(status).json({ error, error_description })
 
   const body = req.body || {}
   const grant = req.body.grant_type
   if (!grant) {
-    return throwError('invalid_request', 'Missing required parameter: grant_type')
+    return throwError(400, 'invalid_request', 'Missing required parameter: grant_type')
   }
   if (grant !== 'authorization_code') {
-    return throwError('invalid_grant', 'Unsupported grant type')
+    return throwError(400, 'unsupported_grant_type', 'Unsupported grant type')
+  }
+
+  let client = null
+  const auth = req.headers['authorization']
+
+  if (auth) { /* Authorization header is present */
+
+    const parts = auth.trim().split(' ')
+    if (parts.length !== 2 || parts[0].toLowerCase() !== 'basic') {
+      res.set('WWW-Authenticate', 'Basic')
+      return throwError(401, 'invalid_client', 'Unsupported authentication method')
+    }
+    const creds = utils.decodeBase64(parts[1]).split(':')
+    client = await db.getClientByID(creds[0])
+    if (!client || client.secret !== creds[1]) {
+      res.set('WWW-Authenticate', 'Basic')
+      return throwError(401, 'invalid_client', 'Invalid client or secret')
+    }
+
+  } else { /* No Authorization header sent */
+
+    return res.status(501).json({ error: 'Non-authorization-header auth not implemented yet' })
+
   }
 
   res.status(501).json({ error: 'Token endpoint not implemented yet' })
