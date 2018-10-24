@@ -168,6 +168,10 @@ app.post('/token', async (req, res) => {
 
   }
 
+  if (!body.code) {
+    return throwError(400, 'invalid_request', 'Missing required parameter: code')
+  }
+
   res.status(501).json({ error: 'Token endpoint not implemented yet' })
 })
 

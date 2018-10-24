@@ -377,6 +377,24 @@ describe('App', () => {
       })
     })
 
+    it('should return invalid_request error when the authorization code is not specified', async () => {
+      const test = res => {
+        expect(res).to.have.status(400)
+        expect(res.body.error).to.equal('invalid_request')
+        expect(res.body.error_description).to.equal(`Missing required parameter: code`)
+      }
+
+      /* Authorization header */
+      const payload =  { grant_type: 'authorization_code' }
+      const auth = utils.encodeBase64('1:sec1')
+      let res = await doAuthPost(`Basic ${auth}`, payload)
+      test(res)
+
+      /* Credentials in body */
+      res = await doPost({ ...payload, client_id: '1', client_secret: 'sec1' })
+      test(res)
+    })
+
     it('should throw 501 error if no issues were found', async () => {
       const auth = utils.encodeBase64('1:sec1')
       const res = await doAuthPost(`Basic ${auth}`, { grant_type: 'authorization_code', code: 'abc' })
