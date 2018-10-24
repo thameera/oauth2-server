@@ -36,7 +36,7 @@ const getSelectors = html => {
 describe('App', () => {
   let server
 
-  before(async () => {
+  beforeEach(async () => {
     await db.init({
       strategy: 'memory',
       data: INIT_DATA
@@ -44,7 +44,7 @@ describe('App', () => {
     server = app.listen(PORT)
   })
 
-  after(() => {
+  afterEach(() => {
     server.close()
     db.shutdown()
   })
@@ -187,7 +187,7 @@ describe('App', () => {
     let agent = null
     const origMomentNow = moment.now
 
-    before(async () => {
+    beforeEach(async () => {
       // Agent is used to preserve cookies
       agent = chai.request.agent(app)
 
@@ -202,9 +202,6 @@ describe('App', () => {
 
     afterEach(() => {
       moment.now = origMomentNow
-    })
-
-    after(() => {
       agent.close()
     })
 
