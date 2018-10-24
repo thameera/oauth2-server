@@ -127,15 +127,15 @@ app.post('/login', async (req, res) => {
 })
 
 app.post('/token', async (req, res) => {
-  const reqdParams = ['grant_type', 'code']
-  const body = req.body || {}
+  const throwError = (error, error_description) => res.status(400).json({ error, error_description })
 
-  const missingParam = reqdParams.find(p => !body[p])
-  if (missingParam) {
-    return res.status(400).json({
-      error: 'invalid_request',
-      error_description: `Missing parameter: ${missingParam}`
-    })
+  const body = req.body || {}
+  const grant = req.body.grant_type
+  if (!grant) {
+    return throwError('invalid_request', 'Missing required parameter: grant_type')
+  }
+  if (grant !== 'authorization_code') {
+    return throwError('invalid_grant', 'Unsupported grant type')
   }
 
   res.status(501).json({ error: 'Token endpoint not implemented yet' })

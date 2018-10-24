@@ -290,16 +290,23 @@ describe('App', () => {
   describe('/token', () => {
     const doPost = payload => chai.request(app).post('/token').send(payload)
 
-    it('should check existence of all required parameters in body', async () => {
-      const check = async (body, param) => {
-        const res = await doPost(body)
-        expect(res).to.have.status(400)
-        expect(res.body.error).to.equal('invalid_request')
-        expect(res.body.error_description).to.equal(`Missing parameter: ${param}`)
-      }
+    it('should return invalid_request error if the grant_type param is missing', async () => {
+      const res = await doPost({ client_id: '1', client_secret: 'sec1', code: 'abc' })
+      expect(res).to.have.status(400)
+      expect(res.body.error).to.equal('invalid_request')
+      expect(res.body.error_description).to.equal(`Missing required parameter: grant_type`)
+    })
 
-      await check({ client_id: '1', client_secret: 'sec1', code: 'abc' }, 'grant_type')
-      await check({ client_id: '1', client_secret: 'sec1', grant_type: 'authorization_code' }, 'code')
+    it('should return invalid_grant error if the grant type is not authzn code', async () => {
+      const res = await doPost({ grant_type: 'implicit' })
+      expect(res).to.have.status(400)
+      expect(res.body.error).to.equal('invalid_grant')
+      expect(res.body.error_description).to.equal(`Unsupported grant type`)
+    })
+
+    it('should throw 501 error if no issues were found', async () => {
+      const res = await doPost({ client_id: '1', client_secret: 'sec1', grant_type: 'authorization_code', code: 'abc' })
+      expect(res).to.have.status(501)
     })
   })
 })
