@@ -172,6 +172,12 @@ app.post('/token', async (req, res) => {
     return throwError(400, 'invalid_request', 'Missing required parameter: code')
   }
 
+  const authznCode = await db.getAuthznCode(body.code)
+
+  if (!authznCode) {
+    return throwError(400, 'invalid_grant', 'Invalid authorization code')
+  }
+
   res.status(501).json({ error: 'Token endpoint not implemented yet' })
 })
 

@@ -12,6 +12,9 @@ chai.use(chaiHttp)
 
 const PORT = 8499
 const INIT_DATA = {
+  authzn_codes: [
+    { code: 'abcd1234', context: { client_id: '1', redirect_uri: 'http://localhost:8498', email: 'test@example.com', expires_at: Date.now() + 50000 } },
+  ],
   clients: [
     {id: '1', secret: 'sec1', name: 'Default client', redirect_uris: ['http://localhost:8498', 'http://localhost:8497']},
     {id: '2', secret: 'sec2', name: 'Client 2', redirect_uris: ['http://localhost:8490']},
@@ -395,9 +398,17 @@ describe('App', () => {
       test(res)
     })
 
+    it('should return invalid_grant error when the authorization code is invalid', async () => {
+      const auth = utils.encodeBase64('1:sec1')
+      const res = await doAuthPost(`Basic ${auth}`, { grant_type: 'authorization_code', code: 'invalid' })
+      expect(res).to.have.status(400)
+      expect(res.body.error).to.equal('invalid_grant')
+      expect(res.body.error_description).to.equal('Invalid authorization code')
+    })
+
     it('should throw 501 error if no issues were found', async () => {
       const auth = utils.encodeBase64('1:sec1')
-      const res = await doAuthPost(`Basic ${auth}`, { grant_type: 'authorization_code', code: 'abc' })
+      const res = await doAuthPost(`Basic ${auth}`, { grant_type: 'authorization_code', code: 'abcd1234' })
       expect(res).to.have.status(501)
     })
   })
