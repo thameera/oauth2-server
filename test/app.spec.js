@@ -16,6 +16,7 @@ const INIT_DATA = {
     { code: 'abcd1234', context: { client_id: '1', redirect_uri: 'http://localhost:8498', email: 'test@example.com', expires_at: Date.now() + 50000 } },
     { code: 'abcd2345', context: { client_id: '1', redirect_uri: 'http://localhost:8498', email: 'test@example.com', expires_at: Date.now() } },
     { code: 'abcd3456', context: { client_id: '2', redirect_uri: 'http://localhost:8498', email: 'test@example.com', expires_at: Date.now() + 50000 } },
+    { code: 'abcd4567', context: { client_id: '1', email: 'test@example.com', expires_at: Date.now() + 50000 } },
   ],
   clients: [
     {id: '1', secret: 'sec1', name: 'Default client', redirect_uris: ['http://localhost:8498', 'http://localhost:8497']},
@@ -430,9 +431,33 @@ describe('App', () => {
       expect(res.body.error_description).to.equal('Invalid authorization code')
     })
 
-    it('should throw 501 error if no issues were found', async () => {
+    it('should return invalid_grant error if redirect URIs don\'t match', async () => {
+      const auth = utils.encodeBase64('1:sec1')
+      const res = await doAuthPost(`Basic ${auth}`, { grant_type: 'authorization_code', code: 'abcd1234', redirect_uri: 'http://localhost:8497' })
+      expect(res).to.have.status(400)
+      expect(res.body.error).to.equal('invalid_grant')
+      expect(res.body.error_description).to.equal('Invalid redirect URI')
+    })
+
+    it('should return invalid_grant error if body has a redirect_uri, but the authzn code doesn\'t', async () => {
+      const auth = utils.encodeBase64('1:sec1')
+      const res = await doAuthPost(`Basic ${auth}`, { grant_type: 'authorization_code', code: 'abcd4567', redirect_uri: 'http://localhost:8498' })
+      expect(res).to.have.status(400)
+      expect(res.body.error).to.equal('invalid_grant')
+      expect(res.body.error_description).to.equal('Invalid redirect URI')
+    })
+
+    it('should return invalid_grant error if body doesn\'t have a redirect_uri, but the authzn code does', async () => {
       const auth = utils.encodeBase64('1:sec1')
       const res = await doAuthPost(`Basic ${auth}`, { grant_type: 'authorization_code', code: 'abcd1234' })
+      expect(res).to.have.status(400)
+      expect(res.body.error).to.equal('invalid_grant')
+      expect(res.body.error_description).to.equal('Invalid redirect URI')
+    })
+
+    it('should throw 501 error if no issues were found', async () => {
+      const auth = utils.encodeBase64('1:sec1')
+      const res = await doAuthPost(`Basic ${auth}`, { grant_type: 'authorization_code', code: 'abcd1234', redirect_uri: 'http://localhost:8498' })
       expect(res).to.have.status(501)
     })
   })

@@ -189,6 +189,12 @@ app.post('/token', async (req, res) => {
   if (ctx.client_id !== client.id) {
     return throwError(400, 'invalid_grant', 'Invalid authorization code')
   }
+  // Validate if redirect URI matches
+  if (body.redirect_uri ||  ctx.redirect_uri) {
+    if (body.redirect_uri !== ctx.redirect_uri) {
+      return throwError(400, 'invalid_grant', 'Invalid redirect URI')
+    }
+  }
 
   res.status(501).json({ error: 'Token endpoint not implemented yet' })
 })
