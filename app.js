@@ -174,12 +174,19 @@ app.post('/token', async (req, res) => {
 
   const authznCode = await db.getAuthznCode(body.code)
 
+  // Is valid code?
   if (!authznCode) {
     return throwError(400, 'invalid_grant', 'Invalid authorization code')
   }
   await db.deleteAuthznCode(body.code)
   const ctx = authznCode.context
+
+  // Validate code expiry
   if (utils.isExpired(ctx.expires_at)) {
+    return throwError(400, 'invalid_grant', 'Invalid authorization code')
+  }
+  // Validate if code was issued to same client
+  if (ctx.client_id !== client.id) {
     return throwError(400, 'invalid_grant', 'Invalid authorization code')
   }
 
