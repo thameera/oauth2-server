@@ -1,6 +1,7 @@
 const _ = require('lodash')
 
 const DEFAULTS = {
+  access_tokens: [],
   authzn_codes: [],
   clients: [],
   login_sessions: [],
@@ -11,6 +12,7 @@ let data = _.cloneDeep(DEFAULTS)
 
 module.exports = {
   init: d => {
+    if (d.access_tokens) data.access_tokens = _.cloneDeep(d.access_tokens)
     if (d.authzn_codes) data.authzn_codes = _.cloneDeep(d.authzn_codes)
     if (d.clients) data.clients = _.cloneDeep(d.clients)
     if (d.login_sessions) data.login_sessions = _.cloneDeep(d.login_sessions)
@@ -37,4 +39,6 @@ module.exports = {
   getAuthznCode: code => data.authzn_codes.find(c => c.code === code),
 
   deleteAuthznCode: code => _.remove(data.authzn_codes, c => c.code === code),
+
+  createAccessToken: at => data.access_tokens.push(at),
 }

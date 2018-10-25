@@ -36,6 +36,7 @@ const getUserByEmail = email => strategy.getUserByEmail(email)
 const createAuthznCode = code => strategy.createAuthznCode(code)
 const getAuthznCode = code => strategy.getAuthznCode(code)
 const deleteAuthznCode = code => strategy.deleteAuthznCode(code)
+const createAccessToken = code => strategy.createAccessToken(code)
 
 module.exports = {
   init,
@@ -47,4 +48,5 @@ module.exports = {
   createAuthznCode,
   getAuthznCode,
   deleteAuthznCode,
+  createAccessToken,
 }

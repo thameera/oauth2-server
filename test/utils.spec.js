@@ -43,6 +43,15 @@ describe('Utils', () => {
     })
   })
 
+  describe('getExpiresInSeconds()', () => {
+    it('should return the input duration in seconds', () => {
+      const f = utils.getExpiresInSeconds
+      expect(f({ value: 5, unit: 'seconds' })).to.equal(5)
+      expect(f({ value: 20, unit: 'minutes' })).to.equal(1200)
+      expect(f({ value: 2, unit: 'hours' })).to.equal(7200)
+    })
+  })
+
   describe('isExpired()', () => {
     const origNow = moment.now
     const FIXED_TIME = 1540117000000

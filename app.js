@@ -201,7 +201,24 @@ app.post('/token', async (req, res) => {
     }
   }
 
-  res.status(501).json({ error: 'Token endpoint not implemented yet' })
+  const token = `at-${randomstring.generate({ length: 32, charset: 'alphanumeric' })}`
+  const expires_at = utils.getExpiryTime(config.ACCESS_TOKEN_EXPIRY)
+  const at = {
+    token,
+    expires_at,
+    issued_at: Date.now(),
+    client_id: client.id,
+    email: ctx.email,
+  }
+  await db.createAccessToken(at)
+
+  res.set('Cache-control', 'no-store')
+  res.set('Pragma', 'no-cache')
+  res.status(200).json({
+    access_token: token,
+    token_type: 'Bearer',
+    expires_in: utils.getExpiresInSeconds(config.ACCESS_TOKEN_EXPIRY),
+  })
 })
 
 module.exports = app

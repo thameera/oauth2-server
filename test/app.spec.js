@@ -469,10 +469,17 @@ describe('App', () => {
       expect(res.body.error_description).to.equal('Invalid redirect URI')
     })
 
-    it('should throw 501 error if no issues were found', async () => {
+    it('should return an access token if no issues were found', async () => {
       const auth = utils.encodeBase64('1:sec1')
       const res = await doAuthPost(`Basic ${auth}`, { grant_type: 'authorization_code', code: 'abcd1234', redirect_uri: 'http://localhost:8498' })
-      expect(res).to.have.status(501)
+
+      expect(res).to.have.status(200)
+      expect(res).to.have.header('content-type', /^application\/json/)
+      expect(res).to.have.header('cache-control', 'no-store')
+      expect(res).to.have.header('pragma', 'no-cache')
+      expect(res.body.access_token).to.match(/^at-.*/)
+      expect(res.body.token_type).to.equal('Bearer')
+      expect(res.body.expires_in).to.equal(3600)
     })
   })
 })
