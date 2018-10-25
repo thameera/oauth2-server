@@ -177,6 +177,7 @@ app.post('/token', async (req, res) => {
   if (!authznCode) {
     return throwError(400, 'invalid_grant', 'Invalid authorization code')
   }
+  await db.deleteAuthznCode(body.code)
 
   res.status(501).json({ error: 'Token endpoint not implemented yet' })
 })

@@ -35,6 +35,7 @@ const getLoginSessionByID = id => strategy.getLoginSessionByID(id)
 const getUserByEmail = email => strategy.getUserByEmail(email)
 const createAuthznCode = code => strategy.createAuthznCode(code)
 const getAuthznCode = code => strategy.getAuthznCode(code)
+const deleteAuthznCode = code => strategy.deleteAuthznCode(code)
 
 module.exports = {
   init,
@@ -45,4 +46,5 @@ module.exports = {
   getUserByEmail,
   createAuthznCode,
   getAuthznCode,
+  deleteAuthznCode,
 }

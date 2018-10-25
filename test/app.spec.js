@@ -403,6 +403,15 @@ describe('App', () => {
       expect(res.body.error_description).to.equal('Invalid authorization code')
     })
 
+    it('should delete the authzn code from DB after it was retrieved', async () => {
+      const auth = utils.encodeBase64('1:sec1')
+      const res1 = await db.getAuthznCode('abcd1234')
+      expect(res1).to.be.not.undefined
+      await doAuthPost(`Basic ${auth}`, { grant_type: 'authorization_code', code: 'abcd1234' })
+      const res2 = await db.getAuthznCode('abcd1234')
+      expect(res2).to.be.undefined
+    })
+
     it('should throw 501 error if no issues were found', async () => {
       const auth = utils.encodeBase64('1:sec1')
       const res = await doAuthPost(`Basic ${auth}`, { grant_type: 'authorization_code', code: 'abcd1234' })
