@@ -42,4 +42,25 @@ describe('Utils', () => {
       expect(exp).to.equal(FIXED_TIME + 2 * 60 * 60 * 1000)
     })
   })
+
+  describe('isExpired()', () => {
+    const origNow = moment.now
+    const FIXED_TIME = 1540117000000
+
+    before(() => {
+      moment.now = () => +new Date(FIXED_TIME)
+    })
+
+    after(() => {
+      moment.now = () => origNow
+    })
+
+    it('should return true for expired dates', () => {
+      expect(utils.isExpired(FIXED_TIME - 1000)).to.be.true
+    })
+
+    it('should return false for non-expired dates', () => {
+      expect(utils.isExpired(FIXED_TIME + 1000)).to.be.false
+    })
+  })
 })

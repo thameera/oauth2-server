@@ -14,6 +14,7 @@ const PORT = 8499
 const INIT_DATA = {
   authzn_codes: [
     { code: 'abcd1234', context: { client_id: '1', redirect_uri: 'http://localhost:8498', email: 'test@example.com', expires_at: Date.now() + 50000 } },
+    { code: 'abcd2345', context: { client_id: '1', redirect_uri: 'http://localhost:8498', email: 'test@example.com', expires_at: Date.now() } },
   ],
   clients: [
     {id: '1', secret: 'sec1', name: 'Default client', redirect_uris: ['http://localhost:8498', 'http://localhost:8497']},
@@ -410,6 +411,14 @@ describe('App', () => {
       await doAuthPost(`Basic ${auth}`, { grant_type: 'authorization_code', code: 'abcd1234' })
       const res2 = await db.getAuthznCode('abcd1234')
       expect(res2).to.be.undefined
+    })
+
+    it('should return invalid_grant error if authzn code is expired', async () => {
+      const auth = utils.encodeBase64('1:sec1')
+      const res = await doAuthPost(`Basic ${auth}`, { grant_type: 'authorization_code', code: 'abcd2345' })
+      expect(res).to.have.status(400)
+      expect(res.body.error).to.equal('invalid_grant')
+      expect(res.body.error_description).to.equal('Invalid authorization code')
     })
 
     it('should throw 501 error if no issues were found', async () => {
