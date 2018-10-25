@@ -201,6 +201,12 @@ describe('App', () => {
         redirect_uri: 'http://localhost:8498',
         originalUrl: '/authorize?client_id=1&response_type=code',
       })
+      await db.createLoginSession({
+        id: 'login-pqr456',
+        client_id: '1',
+        response_type: 'code',
+        originalUrl: '/authorize?client_id=1&response_type=code',
+      })
     })
 
     afterEach(() => {
@@ -265,14 +271,14 @@ describe('App', () => {
       await invalidUserPassTest('test@example.com', 'wrong')
     })
 
-    it('should create an authzn code and redirect with that code', async () => {
+    const testHappyFlow = async login_id => {
       const FIXED_TIME = 1540117200000
       moment.now = () => +new Date(FIXED_TIME)
 
       const res = await agent.post('/login').type('form').redirects(0).send({
         username: 'test@example.com',
         password: 'pass',
-        login_id: 'login-pqr123'
+        login_id: login_id
       })
 
       expect(res).to.have.status(302)
@@ -288,6 +294,14 @@ describe('App', () => {
       expect(authznCode.context.redirect_uri).to.equal('http://localhost:8498')
       expect(authznCode.context.email).to.equal('test@example.com')
       expect(authznCode.context.expires_at).to.equal(FIXED_TIME + 10 * 60 * 1000)
+    }
+
+    it('should create an authzn code and redirect with that code', async () => {
+      await testHappyFlow('login-pqr123')
+    })
+
+    it('should redirect to client\'s first redirect_uri if no redirect URI was in login session', async () => {
+      await testHappyFlow('login-pqr123')
     })
   })
 

@@ -120,7 +120,12 @@ app.post('/login', async (req, res) => {
   }
   await db.createAuthznCode({ code, context })
 
-  const url = new URL(loginSession.redirect_uri)
+  let redirectUri = loginSession.redirect_uri
+  if (!redirectUri) {
+    const client = await db.getClientByID(loginSession.client_id)
+    redirectUri = client.redirect_uris[0]
+  }
+  const url = new URL(redirectUri)
   url.searchParams.set('code', code)
 
   res.redirect(url)
