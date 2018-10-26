@@ -326,6 +326,12 @@ describe('App', () => {
     it('should redirect to client\'s first redirect_uri if no redirect URI was in login session', async () => {
       await testHappyFlow('login-pqr123')
     })
+
+    it('should delete loginSession after successful authentication', async () => {
+      await testHappyFlow('login-pqr123')
+      const session = await db.getLoginSessionByID('login-pqr123')
+      expect(session).to.be.undefined
+    })
   })
 
   describe('/token', () => {

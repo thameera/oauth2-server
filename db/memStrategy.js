@@ -29,6 +29,8 @@ module.exports = {
 
   getLoginSessionByID: id => data.login_sessions.find(s => s.id === id),
 
+  deleteLoginSession: id => _.remove(data.login_sessions, s => s.id === id),
+
   getUserByEmail: email => {
     const emailLower = email.toLowerCase()
     return data.users.find(u => u.email.toLowerCase() === emailLower)
