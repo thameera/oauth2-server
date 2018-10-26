@@ -7,4 +7,8 @@ module.exports = {
     value: 1,
     unit: 'hours',
   },
+  LOGIN_SESSION_EXPIRY: {
+    value: 8,
+    unit: 'hours',
+  },
 }

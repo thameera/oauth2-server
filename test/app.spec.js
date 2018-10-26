@@ -62,6 +62,12 @@ describe('App', () => {
   })
 
   describe('/authorize', () => {
+    const origMomentNow = moment.now
+
+    afterEach(() => {
+      moment.now = origMomentNow
+    })
+
     const errCheck = async (path, status) => {
       const res = await chai.request(app).get(path)
       expect(res).to.have.status(status)
@@ -159,6 +165,9 @@ describe('App', () => {
     }
 
     it('should create a login session in DB with all details', async () => {
+      const FIXED_TIME = 1540117200000
+      moment.now = () => +new Date(FIXED_TIME)
+
       const url = '/authorize?client_id=1&response_type=code'
       const { session, loginID } = await getLoginSession(url)
 
@@ -167,6 +176,7 @@ describe('App', () => {
       expect(session.client_id).to.equal('1')
       expect(session.response_type).to.equal('code')
       expect(session.originalUrl).to.equal(url)
+      expect(session.expires_at).to.equal(FIXED_TIME + 8 * 60 * 60 * 1000)
     })
 
     it('should set redirect_uri in login session when a redirect uri is provided', async () => {
@@ -200,12 +210,14 @@ describe('App', () => {
         response_type: 'code',
         redirect_uri: 'http://localhost:8498',
         originalUrl: '/authorize?client_id=1&response_type=code',
+        expires_at: Date.now() + 50000,
       })
       await db.createLoginSession({
         id: 'login-pqr456',
         client_id: '1',
         response_type: 'code',
         originalUrl: '/authorize?client_id=1&response_type=code',
+        expires_at: Date.now() - 1000,
       })
     })
 
@@ -230,7 +242,7 @@ describe('App', () => {
 
       const { $, $$ } = getSelectors(res.text)
       expect($('title').text).to.equal('Error')
-      expect($('p').textContent).to.equal('Invalid login session')
+      expect($('p').textContent).to.equal('Invalid or expired login session')
     })
 
     it('should show error page for invalid login session, even if credentials are correct', async () => {
@@ -241,7 +253,18 @@ describe('App', () => {
 
       const { $, $$ } = getSelectors(res.text)
       expect($('title').text).to.equal('Error')
-      expect($('p').textContent).to.equal('Invalid login session')
+      expect($('p').textContent).to.equal('Invalid or expired login session')
+    })
+
+    it('should show error page for expired login session', async () => {
+      const res = await doPost('login-pqr456', 'test@example.com', 'pass')
+
+      expect(res).to.have.status(400)
+      expect(res).to.have.header('content-type', /^text\/html/)
+
+      const { $, $$ } = getSelectors(res.text)
+      expect($('title').text).to.equal('Error')
+      expect($('p').textContent).to.equal('Invalid or expired login session')
     })
 
     const invalidUserPassTest = async (user, pass) => {
