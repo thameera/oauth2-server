@@ -53,11 +53,11 @@ describe('App', () => {
   })
 
   describe('/', () => {
-    it('should send back the OIDC Server home page', async () => {
+    it('should send back the OAuth Server home page', async () => {
       const res = await chai.request(app).get('/')
       expect(res).to.have.status(200)
       expect(res).to.have.header('content-type', /^text\/html/)
-      expect(res.text).to.equal('OIDC server')
+      expect(res.text).to.equal('OAuth 2.0 server')
     })
   })
 
