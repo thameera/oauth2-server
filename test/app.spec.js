@@ -194,6 +194,22 @@ describe('App', () => {
       expect(session).to.be.not.undefined
       expect(session.redirect_uri).to.be.null
     })
+
+    it('should set state in login session when a state is provided', async () => {
+      const url = '/authorize?client_id=1&response_type=code&state=abc'
+      const { session } = await getLoginSession(url)
+
+      expect(session).to.be.not.undefined
+      expect(session.state).to.equal('abc')
+    })
+
+    it('should not set state in login session when a state is not provided', async () => {
+      const url = '/authorize?client_id=1&response_type=code'
+      const { session } = await getLoginSession(url)
+
+      expect(session).to.be.not.undefined
+      expect(session.state).to.be.null
+    })
   })
 
   describe('/login', () => {
@@ -211,6 +227,16 @@ describe('App', () => {
         redirect_uri: 'http://localhost:8498',
         originalUrl: '/authorize?client_id=1&response_type=code',
         expires_at: Date.now() + 50000,
+        state: null,
+      })
+      await db.createLoginSession({
+        id: 'login-pqr345',
+        client_id: '1',
+        response_type: 'code',
+        redirect_uri: 'http://localhost:8498',
+        originalUrl: '/authorize?client_id=1&response_type=code',
+        expires_at: Date.now() + 50000,
+        state: 'abcDE3!',
       })
       await db.createLoginSession({
         id: 'login-pqr456',
@@ -218,6 +244,7 @@ describe('App', () => {
         response_type: 'code',
         originalUrl: '/authorize?client_id=1&response_type=code',
         expires_at: Date.now() - 1000,
+        state: null,
       })
     })
 
@@ -317,6 +344,8 @@ describe('App', () => {
       expect(authznCode.context.redirect_uri).to.equal('http://localhost:8498')
       expect(authznCode.context.email).to.equal('test@example.com')
       expect(authznCode.context.expires_at).to.equal(FIXED_TIME + 10 * 60 * 1000)
+
+      return url
     }
 
     it('should create an authzn code and redirect with that code', async () => {
@@ -325,6 +354,18 @@ describe('App', () => {
 
     it('should redirect to client\'s first redirect_uri if no redirect URI was in login session', async () => {
       await testHappyFlow('login-pqr123')
+    })
+
+    it('should return the state when a state is present in login session', async () => {
+      const url = await testHappyFlow('login-pqr345')
+      const state = url.searchParams.get('state')
+      expect(state).to.equal('abcDE3!')
+    })
+
+    it('should not return a state when a state is not present in login session', async () => {
+      const url = await testHappyFlow('login-pqr123')
+      const state = url.searchParams.get('state')
+      expect(state).to.be.null
     })
 
     it('should delete loginSession after successful authentication', async () => {
