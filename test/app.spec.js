@@ -93,21 +93,6 @@ describe('App', () => {
       expect($('p').textContent).to.equal('Invalid client ID: invalidID')
     })
 
-    it('should look for a response type', async () => {
-      const { $ } = await errCheck('/authorize?client_id=1', 400)
-      expect($('p').textContent).to.equal('Missing required parameter: response_type')
-    })
-
-    it('should detect an empty response type', async () => {
-      const { $ } = await errCheck('/authorize?client_id=1&response_type=', 400)
-      expect($('p').textContent).to.equal('Missing required parameter: response_type')
-    })
-
-    it('should look validate the response type', async () => {
-      const { $ } = await errCheck('/authorize?client_id=1&response_type=pqr', 400)
-      expect($('p').textContent).to.equal('Invalid response type: pqr')
-    })
-
     it('should check if the client has registered redirect URIs if a redirect URI is not specified', async () => {
       const { $ } = await errCheck('/authorize?client_id=3&response_type=code', 400)
       expect($('p').textContent).to.equal('No redirect URIs configured for the client')
@@ -121,6 +106,56 @@ describe('App', () => {
     it('should validate the redirect uri against registered redirect uris', async () => {
       const { $ } = await errCheck('/authorize?client_id=1&response_type=code&redirect_uri=http://localhost:8500', 400)
       expect($('p').textContent).to.equal('Invalid redirect URI: http://localhost:8500')
+    })
+
+    const responseTypeErrCheck = async path => {
+      const res = await chai.request(app).get(path).redirects(0)
+      expect(res).to.have.status(302)
+      const url = new URL(res.headers.location)
+      const pathname = url.pathname.endsWith('/') ? url.pathname.slice(0, url.pathname.length - 1) : url.pathname
+      return {
+        path: url.origin + pathname,
+        error: url.searchParams.get('error'),
+        error_desc: url.searchParams.get('error_description'),
+        state: url.searchParams.get('state')
+      }
+    }
+
+    it('should look for a response type', async () => {
+      const r = await responseTypeErrCheck('/authorize?client_id=1&redirect_uri=http://localhost:8498')
+      expect(r.path).to.equal('http://localhost:8498')
+      expect(r.error).to.equal('invalid_request')
+      expect(r.error_desc).to.equal('Missing required parameter: response_type')
+    })
+
+    it('should detect an empty response type', async () => {
+      const r = await responseTypeErrCheck('/authorize?client_id=1&redirect_uri=http://localhost:8498&response_type=')
+      expect(r.path).to.equal('http://localhost:8498')
+      expect(r.error).to.equal('invalid_request')
+      expect(r.error_desc).to.equal('Missing required parameter: response_type')
+    })
+
+    it('should look validate the response type', async () => {
+      const r = await responseTypeErrCheck('/authorize?client_id=1&redirect_uri=http://localhost:8498&response_type=pqr')
+      expect(r.path).to.equal('http://localhost:8498')
+      expect(r.error).to.equal('unsupported_response_type')
+      expect(r.error_desc).to.equal('Invalid or unsupported response type')
+    })
+
+    it('should send back state when response type is invalid and a state was specified', async () => {
+      let r = await responseTypeErrCheck('/authorize?client_id=1&redirect_uri=http://localhost:8498&state=abc123')
+      expect(r.state).to.equal('abc123')
+
+      r = await responseTypeErrCheck('/authorize?client_id=1&redirect_uri=http://localhost:8498&response_type=pqr&state=abc123')
+      expect(r.state).to.equal('abc123')
+    })
+
+    it('should not send back state when response type is invalid and no state was specified', async () => {
+      let r = await responseTypeErrCheck('/authorize?client_id=1&redirect_uri=http://localhost:8498')
+      expect(r.state).to.be.null
+
+      r = await responseTypeErrCheck('/authorize?client_id=1&redirect_uri=http://localhost:8498&response_type=pqr')
+      expect(r.state).to.be.null
     })
 
     it('should show the login page if no errors are found', async () => {
