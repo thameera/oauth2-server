@@ -3,6 +3,7 @@ require('./authorize-endpoint.spec')
 const chai = require('chai')
 const chaiHttp = require('chai-http')
 const moment = require('moment')
+const qs = require('querystring')
 
 const helpers = require('./helpers')
 const getSelectors = helpers.getSelectors
@@ -54,6 +55,24 @@ describe('/login', () => {
       originalUrl: '/authorize?client_id=1&response_type=code',
       expires_at: Date.now() - 1000,
       state: null,
+    })
+    await db.createLoginSession({
+      id: 'login-stu123',
+      client_id: '1',
+      response_type: 'token',
+      redirect_uri: 'http://localhost:8498',
+      originalUrl: '/authorize?client_id=1&response_type=token',
+      expires_at: Date.now() + 50000,
+      state: null,
+    })
+    await db.createLoginSession({
+      id: 'login-stu345',
+      client_id: '1',
+      response_type: 'token',
+      redirect_uri: 'http://localhost:8498',
+      originalUrl: '/authorize?client_id=1&response_type=token',
+      expires_at: Date.now() + 50000,
+      state: 'abcDE3!',
     })
   })
 
@@ -133,7 +152,7 @@ describe('/login', () => {
     await invalidUserPassTest('test@example.com', 'wrong')
   })
 
-  const testHappyFlow = async login_id => {
+  const testHappyFlow_Code = async login_id => {
     const FIXED_TIME = 1540117200000
     moment.now = () => +new Date(FIXED_TIME)
 
@@ -160,29 +179,75 @@ describe('/login', () => {
     return url
   }
 
-  it('should create an authzn code and redirect with that code', async () => {
-    await testHappyFlow('login-pqr123')
+  const testHappyFlow_Implicit = async login_id => {
+    const FIXED_TIME = 1540117200000
+    moment.now = () => +new Date(FIXED_TIME)
+
+    const res = await agent.post('/login').type('form').redirects(0).send({
+      username: 'test@example.com',
+      password: 'pass',
+      login_id: login_id
+    })
+
+    expect(res).to.have.status(302)
+    const url = new URL(res.headers.location)
+    expect(url.hash).to.be.not.empty
+    const hash = qs.parse(url.hash.substr(1))
+    expect(hash.access_token).to.be.not.undefined
+    expect(hash.access_token).to.match(/^at-.*/)
+    expect(hash.token_type).to.equal('Bearer')
+    expect(hash.expires_in).to.equal('3600')
+
+    return hash
+  }
+
+  it('should create an authzn code and redirect with that code (code grant)', async () => {
+    await testHappyFlow_Code('login-pqr123')
   })
 
-  it('should redirect to client\'s first redirect_uri if no redirect URI was in login session', async () => {
-    await testHappyFlow('login-pqr123')
+  it('should redirect with an access token (implicit grant)', async () => {
+    await testHappyFlow_Implicit('login-stu123')
   })
 
-  it('should return the state when a state is present in login session', async () => {
-    const url = await testHappyFlow('login-pqr345')
+  it('should redirect to client\'s first redirect_uri if no redirect URI was in login session (code grant)', async () => {
+    await testHappyFlow_Code('login-pqr123')
+  })
+
+  it('should redirect to client\'s first redirect_uri if no redirect URI was in login session (implicit grant)', async () => {
+    await testHappyFlow_Implicit('login-stu123')
+  })
+
+  it('should return the state when a state is present in login session (code grant)', async () => {
+    const url = await testHappyFlow_Code('login-pqr345')
     const state = url.searchParams.get('state')
     expect(state).to.equal('abcDE3!')
   })
 
-  it('should not return a state when a state is not present in login session', async () => {
-    const url = await testHappyFlow('login-pqr123')
+  it('should return the state when a state is present in login session (implicit grant)', async () => {
+    const hash = await testHappyFlow_Implicit('login-stu345')
+    expect(hash.state).to.equal('abcDE3!')
+  })
+
+  it('should not return a state when a state is not present in login session (code grant)', async () => {
+    const url = await testHappyFlow_Code('login-pqr123')
     const state = url.searchParams.get('state')
     expect(state).to.be.null
   })
 
-  it('should delete loginSession after successful authentication', async () => {
-    await testHappyFlow('login-pqr123')
+  it('should not return a state when a state is not present in login session (implicit grant)', async () => {
+    const hash = await testHappyFlow_Implicit('login-stu123')
+    expect(hash.state).to.be.undefined
+  })
+
+  it('should delete loginSession after successful authentication (code grant)', async () => {
+    await testHappyFlow_Code('login-pqr123')
     const session = await db.getLoginSessionByID('login-pqr123')
+    expect(session).to.be.undefined
+  })
+
+  it('should delete loginSession after successful authentication (implicit grant)', async () => {
+    await testHappyFlow_Implicit('login-stu123')
+    const session = await db.getLoginSessionByID('login-stu123')
     expect(session).to.be.undefined
   })
 })
